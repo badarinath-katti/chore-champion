@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "20272480857",
+    "project_id": "chorechampions-95bbd",
+    "storage_bucket": "chorechampions-95bbd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20272480857:android:5814f845f3c359b7ac2748",
+        "android_client_info": {
+          "package_name": "com.chorechampion.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "20272480857-qtmvtparpqn2b088hcv7j7l3qpoo4pch.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbqTThH0-egCqMtzuAEkLHhHegJ2qfeuY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "20272480857-qtmvtparpqn2b088hcv7j7l3qpoo4pch.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.3"
+        android:scaleY="0.3"
+        android:translateX="37.8"
+        android:translateY="37.8">
+        <!-- Trophy/Star icon representing champion -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,8l6.18,12.52L73,22.36l-9.5,9.26 2.24,13.08L54,38.52l-11.74,6.18 2.24,-13.08 -9.5,-9.26 12.82,-1.84z" />
+        <path
+            android:fillColor="#FFD700"
+            android:pathData="M54,10l5.45,11.05L70.73,22.8l-8.37,8.16 1.98,11.54L54,36.64l-10.34,5.86 1.98,-11.54 -8.37,-8.16 11.28,-1.75z" />
+        <!-- Checkmark -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M48,62l-8,-8 2.83,-2.83L48,56.34l14.17,-14.17L65,45z"
+            android:strokeWidth="2" />
+    </group>
+</vector>

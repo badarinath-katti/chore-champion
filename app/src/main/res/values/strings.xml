@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Chore Champion</string>
+    
+    <!-- Auth Screens -->
+    <string name="welcome_title">Welcome to Chore Champion</string>
+    <string name="welcome_subtitle">Make chores fun with your partner!</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="name">Name</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="dont_have_account">Don\'t have an account? Sign up</string>
+    <string name="already_have_account">Already have an account? Sign in</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_chores">Chores</string>
+    <string name="nav_history">History</string>
+    <string name="nav_profile">Profile</string>
+    
+    <!-- Home Screen -->
+    <string name="dashboard_title">This Week</string>
+    <string name="your_points">Your Points</string>
+    <string name="partner_points">Partner Points</string>
+    <string name="pending_chores">Pending Chores</string>
+    <string name="completed_chores">Completed</string>
+    <string name="youre_winning">You\'re Winning!</string>
+    <string name="youre_behind">Catch Up!</string>
+    <string name="tied">It\'s a Tie!</string>
+    
+    <!-- Chores -->
+    <string name="add_chore">Add Chore</string>
+    <string name="chore_title">Chore Title</string>
+    <string name="chore_description">Description</string>
+    <string name="chore_category">Category</string>
+    <string name="chore_weightage">Weightage</string>
+    <string name="mark_complete">Mark Complete</string>
+    <string name="completion_percentage">Completion %</string>
+    <string name="add_photo">Add Photo</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="notes">Notes</string>
+    
+    <!-- Categories -->
+    <string name="category_cleaning">Cleaning</string>
+    <string name="category_cooking">Cooking</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_maintenance">Maintenance</string>
+    <string name="category_laundry">Laundry</string>
+    <string name="category_other">Other</string>
+    
+    <!-- Evaluation -->
+    <string name="weekly_evaluation">Weekly Evaluation</string>
+    <string name="winner">Winner</string>
+    <string name="week_summary">Week Summary</string>
+    <string name="total_points">Total Points</string>
+    
+    <!-- Common -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="loading">Loading…</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="retry">Retry</string>
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+    
+    <!-- Icons -->
+    <string name="category">Category</string>
+</resources>
