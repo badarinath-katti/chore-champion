@@ -50,6 +50,7 @@ captures/
 .idea/misc.xml
 .idea/vcs.xml
 .idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
 
 # Keystore files
 *.jks
@@ -78,6 +79,9 @@ fastlane/readme.md
 # Version control
 vcs.xml
 
+# VS Code
+.vscode/
+
 # lint
 lint/intermediates/
 lint/generated/
@@ -102,3 +106,4 @@ lint-results.html
 *~
 *.swp
 *.bak
+.vscode/

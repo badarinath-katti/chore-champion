@@ -7,6 +7,18 @@ plugins {
     id("com.google.devtools.ksp") version "1.9.22-1.0.17" apply false
 }
 
+// Force Java 17 for all subprojects
+subprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        options.release.set(17)
+    }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+}
+
 tasks.register("clean", Delete::class) {
     delete(rootProject.layout.buildDirectory)
 }
