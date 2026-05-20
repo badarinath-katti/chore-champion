@@ -9,6 +9,9 @@ interface ChallengeDao {
     @Query("SELECT * FROM challenges WHERE id = :challengeId")
     fun getChallengeById(challengeId: String): Flow<ChallengeEntity?>
 
+    @Query("SELECT * FROM challenges WHERE invite_code = :inviteCode LIMIT 1")
+    suspend fun getChallengeByInviteCode(inviteCode: String): ChallengeEntity?
+
     @Query("SELECT * FROM challenges WHERE creator_user_id = :userId OR partner_user_id = :userId ORDER BY created_at DESC")
     fun getChallengesByUser(userId: String): Flow<List<ChallengeEntity>>
 
@@ -35,6 +38,9 @@ interface ChallengeDao {
 
     @Query("UPDATE challenges SET status = :status WHERE id = :challengeId")
     suspend fun updateChallengeStatus(challengeId: String, status: String)
+
+    @Query("UPDATE challenges SET partner_user_id = :partnerId WHERE id = :challengeId")
+    suspend fun updateChallengePartner(challengeId: String, partnerId: String)
 
     @Query("DELETE FROM challenges WHERE id = :challengeId")
     suspend fun deleteChallengeById(challengeId: String)

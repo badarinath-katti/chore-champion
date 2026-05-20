@@ -57,21 +57,14 @@ class PartnerSelectionViewModel @Inject constructor(
                 // Load all users first
                 userRepository.getAllUsers().first().let { users ->
                     _allUsers.value = users
+                }
                     
-                    // Load current user - use same logic as ChallengeViewModel
-                    // Try auth repository first, fall back to first user
-                    val currentUserId = authRepository.getCurrentUserId()
-                    val currentUserSet = if (currentUserId != null) {
-                        userRepository.getUserById(currentUserId).first()?.let { user ->
-                            _currentUser.value = user
-                            true
-                        } ?: false
-                    } else {
-                        false
-                    }
-                    
-                    if (!currentUserSet && users.isNotEmpty()) {
-                        _currentUser.value = users.first()
+                // Load current user from Firebase auth
+                val firebaseUser = authRepository.currentUser
+                if (firebaseUser != null) {
+                    val user = userRepository.getUserByFirebaseUid(firebaseUser.uid)
+                    if (user != null) {
+                        _currentUser.value = user
                     }
                 }
             } catch (e: Exception) {

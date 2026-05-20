@@ -22,10 +22,10 @@ class ChoreViewModel @Inject constructor(
     val choreState: StateFlow<ChoreState> = _choreState.asStateFlow()
 
     val allChores: StateFlow<List<Chore>> = choreRepository.getAllChores()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allCategories: StateFlow<List<ChoreCategory>> = choreRepository.getAllCategories()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _selectedCategoryFilter = MutableStateFlow<String?>(null)
     val selectedCategoryFilter = _selectedCategoryFilter.asStateFlow()
@@ -68,7 +68,12 @@ class ChoreViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
-                val userId = authRepository.getCurrentUserId() ?: return@launch
+                // Use Firebase UID if available, fallback to "unknown" to avoid silent abort
+                val userId = authRepository.getCurrentUserId() ?: authRepository.currentUser?.uid ?: "unknown"
+                if (categoryId.isBlank()) {
+                    _choreState.value = ChoreState.Error("No category selected")
+                    return@launch
+                }
                 val chore = Chore(
                     id = UUID.randomUUID().toString(),
                     title = title,

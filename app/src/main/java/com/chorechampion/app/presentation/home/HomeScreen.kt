@@ -30,7 +30,7 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.dashboard_title)) },
                 actions = {
-                    IconButton(onClick = { /* TODO: Navigate to profile */ }) {
+                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
                         Icon(Icons.Default.Person, contentDescription = "Profile")
                     }
                 }
@@ -60,7 +60,7 @@ fun HomeScreen(
                     icon = { Icon(Icons.Default.Person, contentDescription = null) },
                     label = { Text(stringResource(R.string.nav_profile)) },
                     selected = false,
-                    onClick = { /* TODO: Profile */ }
+                    onClick = { navController.navigate(Screen.Profile.route) }
                 )
             }
         },

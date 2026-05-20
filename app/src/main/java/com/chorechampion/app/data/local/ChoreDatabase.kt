@@ -16,7 +16,7 @@ import com.chorechampion.app.data.local.entity.*
         RewardEntity::class,
         ChallengeEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class ChoreDatabase : RoomDatabase() {

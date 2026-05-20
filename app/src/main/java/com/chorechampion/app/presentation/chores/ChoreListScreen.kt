@@ -31,9 +31,23 @@ fun ChoreListScreen(
     val chores by viewModel.filteredChores.collectAsState()
     val categories by viewModel.allCategories.collectAsState()
     val selectedCategory by viewModel.selectedCategoryFilter.collectAsState()
+    val choreState by viewModel.choreState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(choreState) {
+        when (val state = choreState) {
+            is ChoreState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                viewModel.resetState()
+            }
+            is ChoreState.ChoreCreated -> viewModel.resetState()
+            else -> {}
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.nav_chores)) },
@@ -246,11 +260,20 @@ fun CreateChoreDialog(
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedCategoryId by remember { mutableStateOf(categories.firstOrNull()?.id ?: "") }
+    var selectedCategoryId by remember(categories.firstOrNull()?.id) {
+        mutableStateOf(categories.firstOrNull()?.id ?: "")
+    }
     var weightage by remember { mutableStateOf("10") }
     var categoryExpanded by remember { mutableStateOf(false) }
     var templateExpanded by remember { mutableStateOf(false) }
     var selectedTemplate by remember { mutableStateOf<DefaultChoreTemplate?>(null) }
+
+    // Auto-select first category if selectedCategoryId is blank and categories load
+    LaunchedEffect(categories) {
+        if (selectedCategoryId.isBlank() && categories.isNotEmpty()) {
+            selectedCategoryId = categories.first().id
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -391,15 +414,16 @@ fun CreateChoreDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    val effectiveCategoryId = selectedCategoryId.ifBlank { categories.firstOrNull()?.id ?: "" }
                     val weightageValue = weightage.toIntOrNull()?.coerceIn(1, 100) ?: 10
                     onConfirm(
                         title,
                         description.ifBlank { null },
-                        selectedCategoryId,
+                        effectiveCategoryId,
                         weightageValue
                     )
                 },
-                enabled = title.isNotBlank() && selectedCategoryId.isNotBlank()
+                enabled = title.isNotBlank()
             ) {
                 Text(stringResource(R.string.save))
             }

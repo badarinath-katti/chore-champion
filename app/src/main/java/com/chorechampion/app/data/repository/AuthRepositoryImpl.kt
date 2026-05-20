@@ -23,8 +23,22 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signUp(email: String, password: String, name: String): Result<User> {
         return try {
+            // Validate inputs
+            if (email.isBlank()) {
+                return Result.failure(Exception("Email cannot be empty"))
+            }
+            if (password.isBlank()) {
+                return Result.failure(Exception("Password cannot be empty"))
+            }
+            if (password.length < 6) {
+                return Result.failure(Exception("Password must be at least 6 characters"))
+            }
+            if (name.isBlank()) {
+                return Result.failure(Exception("Name cannot be empty"))
+            }
+
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = result.user ?: throw Exception("User creation failed")
+            val firebaseUser = result.user ?: throw Exception("User creation failed - no user returned")
 
             // Update Firebase profile
             val profileUpdates = UserProfileChangeRequest.Builder()
@@ -43,23 +57,56 @@ class AuthRepositoryImpl @Inject constructor(
             userDao.insertUser(user.toEntity())
 
             Result.success(user)
+        } catch (e: com.google.firebase.FirebaseNetworkException) {
+            Result.failure(Exception("Network error: Please check your internet connection"))
+        } catch (e: com.google.firebase.auth.FirebaseAuthWeakPasswordException) {
+            Result.failure(Exception("Password is too weak. Use at least 6 characters"))
+        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
+            Result.failure(Exception("Invalid email format"))
+        } catch (e: com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+            Result.failure(Exception("An account with this email already exists"))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Sign up failed: ${e.message ?: "Unknown error"}"))
         }
     }
 
     override suspend fun signIn(email: String, password: String): Result<User> {
         return try {
-            val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            val firebaseUser = result.user ?: throw Exception("Sign in failed")
+            // Check if email is valid
+            if (email.isBlank()) {
+                return Result.failure(Exception("Email cannot be empty"))
+            }
+            if (password.isBlank()) {
+                return Result.failure(Exception("Password cannot be empty"))
+            }
 
-            // Get user from local database
-            val user = userDao.getUserByFirebaseUid(firebaseUser.uid)?.toDomain()
-                ?: throw Exception("User not found in database")
+            val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
+            val firebaseUser = result.user ?: throw Exception("Sign in failed - no user returned")
+
+            // Get user from local database, or create if not exists
+            var user = userDao.getUserByFirebaseUid(firebaseUser.uid)?.toDomain()
+            
+            if (user == null) {
+                // User authenticated with Firebase but not in local DB - create entry
+                user = User(
+                    id = UUID.randomUUID().toString(),
+                    firebaseUid = firebaseUser.uid,
+                    email = firebaseUser.email ?: email,
+                    name = firebaseUser.displayName ?: "User",
+                    createdAt = System.currentTimeMillis()
+                )
+                userDao.insertUser(user.toEntity())
+            }
 
             Result.success(user)
+        } catch (e: com.google.firebase.FirebaseNetworkException) {
+            Result.failure(Exception("Network error: Please check your internet connection"))
+        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
+            Result.failure(Exception("Invalid email or password"))
+        } catch (e: com.google.firebase.auth.FirebaseAuthInvalidUserException) {
+            Result.failure(Exception("No account found with this email"))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Sign in failed: ${e.message ?: "Unknown error"}"))
         }
     }
 

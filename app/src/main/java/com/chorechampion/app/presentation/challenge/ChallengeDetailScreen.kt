@@ -30,6 +30,8 @@ fun ChallengeDetailScreen(
 ) {
     val challenge by viewModel.selectedChallenge.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
+    val challengeCreator by viewModel.challengeCreator.collectAsState()
+    val challengePartner by viewModel.challengePartner.collectAsState()
     val availableChores by choreViewModel.allChores.collectAsState()
     val challengeAssignments by assignmentViewModel.challengeAssignments.collectAsState()
     
@@ -223,11 +225,108 @@ fun ChallengeDetailScreen(
                                     color = MaterialTheme.colorScheme.secondary
                                 )
                             }
+
+                            // Invite Code (only for creator)
+                            if (currentChallenge.creatorUserId == currentUser?.id) {
+                                Divider()
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Share,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Invite Code",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = currentChallenge.inviteCode,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            letterSpacing = androidx.compose.ui.unit.TextUnit(4f, androidx.compose.ui.unit.TextUnitType.Sp)
+                                        )
+                                        Text(
+                                            text = "Share with your partner to join",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                // Assigned Chores Section Header
+                // Participants Card
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "Participants",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            // Creator
+                            challengeCreator?.let { creator ->
+                                ParticipantRow(
+                                    user = creator,
+                                    role = "Creator",
+                                    isCurrentUser = creator.id == currentUser?.id
+                                )
+                            }
+
+                            // Partner
+                            if (challengePartner != null) {
+                                Divider()
+                                ParticipantRow(
+                                    user = challengePartner!!,
+                                    role = "Partner",
+                                    isCurrentUser = challengePartner!!.id == currentUser?.id
+                                )
+                            } else if (!currentChallenge.isSolo()) {
+                                Divider()
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.PersonAdd,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Waiting for partner",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "Share the invite code to invite someone",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -287,9 +386,23 @@ fun ChallengeDetailScreen(
                         }
                     }
                 } else {
+                    val sharedChoreIds = challengeAssignments
+                        .groupBy { it.choreId }
+                        .filter { it.value.size > 1 }
+                        .keys
                     items(challengeAssignments) { assignment ->
+                        val participants = listOfNotNull(challengeCreator, challengePartner)
+                        val choreName = availableChores
+                            .firstOrNull { it.id == assignment.choreId }?.title
+                            ?: "Unknown Chore"
+                        val assignedToName = participants
+                            .firstOrNull { it.id == assignment.assignedToUserId }?.name
+                            ?: assignment.assignedToUserId.take(8)
                         ChallengeAssignmentCard(
                             assignment = assignment,
+                            choreName = choreName,
+                            assignedToName = assignedToName,
+                            isShared = assignment.choreId in sharedChoreIds,
                             onDelete = { assignmentViewModel.deleteAssignment(assignment.id) }
                         )
                     }
@@ -312,10 +425,10 @@ fun ChallengeDetailScreen(
             availableChores = availableChores,
             currentUser = currentUser,
             onDismiss = { showAssignChoreDialog = false },
-            onAssign = { choreId, userId, startDate, endDate ->
+            onAssign = { choreId, userIds, startDate, endDate ->
                 assignmentViewModel.assignChoreToChallenge(
                     choreId = choreId,
-                    userId = userId,
+                    userIds = userIds,
                     challengeId = challengeId,
                     startDate = startDate,
                     endDate = endDate
@@ -355,8 +468,65 @@ fun ChallengeDetailScreen(
 }
 
 @Composable
+fun ParticipantRow(user: com.chorechampion.app.domain.model.User, role: String, isCurrentUser: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            shape = androidx.compose.foundation.shape.CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = user.name.firstOrNull()?.uppercase() ?: "?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = user.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (isCurrentUser) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = "You",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+            Text(
+                text = "$role · ${user.email}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
 fun ChallengeAssignmentCard(
     assignment: WeeklyAssignment,
+    choreName: String,
+    assignedToName: String,
+    isShared: Boolean = false,
     onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -376,13 +546,31 @@ fun ChallengeAssignmentCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = choreName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (isShared) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                text = "Shared",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 Text(
-                    text = "Chore ID: ${assignment.choreId.take(8)}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "Assigned to: ${assignment.assignedToUserId.take(8)}",
+                    text = "Assigned to: $assignedToName",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -397,7 +585,7 @@ fun ChallengeAssignmentCard(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "${assignment.targetWeightage} points",
+                        text = if (isShared) "${assignment.targetWeightage} pts (split)" else "${assignment.targetWeightage} points",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -464,11 +652,12 @@ fun AssignChoreDialog(
     availableChores: List<Chore>,
     currentUser: User?,
     onDismiss: () -> Unit,
-    onAssign: (choreId: String, userId: String, startDate: Long, endDate: Long) -> Unit
+    onAssign: (choreId: String, userIds: List<String>, startDate: Long, endDate: Long) -> Unit
 ) {
     var selectedChore by remember { mutableStateOf<Chore?>(null) }
     var choreExpanded by remember { mutableStateOf(false) }
     var selectedUserId by remember { mutableStateOf(currentUser?.id ?: "") }
+    var assignToBoth by remember { mutableStateOf(false) }
     var weekStartDate by remember { mutableStateOf(challenge.startDate) }
     var weekEndDate by remember { mutableStateOf(challenge.startDate + (7 * 24 * 60 * 60 * 1000L)) }
 
@@ -534,17 +723,30 @@ fun AssignChoreDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
-                            selected = selectedUserId == challenge.creatorUserId,
-                            onClick = { selectedUserId = challenge.creatorUserId },
+                            selected = !assignToBoth && selectedUserId == challenge.creatorUserId,
+                            onClick = { assignToBoth = false; selectedUserId = challenge.creatorUserId },
                             label = { Text("Me") }
                         )
                         challenge.partnerUserId?.let { partnerId ->
                             FilterChip(
-                                selected = selectedUserId == partnerId,
-                                onClick = { selectedUserId = partnerId },
+                                selected = !assignToBoth && selectedUserId == partnerId,
+                                onClick = { assignToBoth = false; selectedUserId = partnerId },
                                 label = { Text("Partner") }
                             )
+                            FilterChip(
+                                selected = assignToBoth,
+                                onClick = { assignToBoth = true; selectedUserId = "" },
+                                label = { Text("Both (split points)") }
+                            )
                         }
+                    }
+                    if (assignToBoth) {
+                        val halfPoints = (selectedChore?.defaultWeightage ?: 10) / 2
+                        Text(
+                            text = "Each participant earns $halfPoints pts",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
@@ -567,11 +769,16 @@ fun AssignChoreDialog(
                     Button(
                         onClick = {
                             selectedChore?.let { chore ->
-                                onAssign(chore.id, selectedUserId, weekStartDate, weekEndDate)
+                                val userIds = if (assignToBoth) {
+                                    listOfNotNull(challenge.creatorUserId, challenge.partnerUserId)
+                                } else {
+                                    listOf(selectedUserId)
+                                }
+                                onAssign(chore.id, userIds, weekStartDate, weekEndDate)
                             }
                         },
                         modifier = Modifier.weight(1f),
-                        enabled = selectedChore != null && selectedUserId.isNotBlank()
+                        enabled = selectedChore != null && (assignToBoth || selectedUserId.isNotBlank())
                     ) {
                         Text("Assign")
                     }

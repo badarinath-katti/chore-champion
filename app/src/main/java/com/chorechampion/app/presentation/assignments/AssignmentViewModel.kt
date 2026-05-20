@@ -68,7 +68,7 @@ class AssignmentViewModel @Inject constructor(
 
     fun assignChoreToChallenge(
         choreId: String,
-        userId: String,
+        userIds: List<String>,
         challengeId: String,
         startDate: Long,
         endDate: Long
@@ -76,20 +76,25 @@ class AssignmentViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val chore = choreRepository.getChoreById(choreId)
-                
-                val assignment = WeeklyAssignment(
-                    id = UUID.randomUUID().toString(),
-                    choreId = choreId,
-                    assignedToUserId = userId,
-                    weekStartDate = startDate,
-                    weekEndDate = endDate,
-                    targetWeightage = chore?.defaultWeightage ?: 10,
-                    status = AssignmentStatus.PENDING,
-                    challengeId = challengeId,
-                    createdAt = System.currentTimeMillis()
-                )
+                val totalPoints = chore?.defaultWeightage ?: 10
+                val pointsEach = totalPoints / userIds.size
+                val remainder = totalPoints % userIds.size
 
-                assignmentRepository.insertAssignment(assignment)
+                userIds.forEachIndexed { index, userId ->
+                    val assignment = WeeklyAssignment(
+                        id = UUID.randomUUID().toString(),
+                        choreId = choreId,
+                        assignedToUserId = userId,
+                        weekStartDate = startDate,
+                        weekEndDate = endDate,
+                        // First user gets any remainder point(s) from integer division
+                        targetWeightage = pointsEach + if (index == 0) remainder else 0,
+                        status = AssignmentStatus.PENDING,
+                        challengeId = challengeId,
+                        createdAt = System.currentTimeMillis()
+                    )
+                    assignmentRepository.insertAssignment(assignment)
+                }
                 _assignmentState.value = AssignmentState.AssignmentCreated
             } catch (e: Exception) {
                 _assignmentState.value = AssignmentState.Error(e.message ?: "Failed to assign chore to challenge")

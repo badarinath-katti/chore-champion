@@ -29,6 +29,8 @@ class AuthViewModel @Inject constructor(
             _authState.value = AuthState.Loading
             authRepository.signIn(email, password)
                 .onSuccess { user ->
+                    // Ensure default categories exist (in case of fresh install or DB reset)
+                    choreRepository.initializeDefaultCategories()
                     _authState.value = AuthState.Success(user)
                 }
                 .onFailure { error ->

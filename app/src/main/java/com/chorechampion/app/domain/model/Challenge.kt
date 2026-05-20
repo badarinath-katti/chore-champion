@@ -8,6 +8,7 @@ data class Challenge(
     val description: String?,
     val creatorUserId: String,
     val partnerUserId: String?, // Optional partner
+    val inviteCode: String, // Unique code for others to join
     val startDate: Long, // Unix timestamp
     val endDate: Long, // Unix timestamp
     val status: ChallengeStatus,

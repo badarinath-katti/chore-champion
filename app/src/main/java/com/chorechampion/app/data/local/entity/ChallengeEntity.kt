@@ -24,6 +24,7 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["creator_user_id"]),
         Index(value = ["partner_user_id"]),
+        Index(value = ["invite_code"], unique = true),
         Index(value = ["status"]),
         Index(value = ["start_date", "end_date"])
     ]
@@ -35,6 +36,7 @@ data class ChallengeEntity(
     val description: String?,
     val creator_user_id: String,
     val partner_user_id: String?,
+    val invite_code: String,
     val start_date: Long,
     val end_date: Long,
     val status: String, // PENDING, ACTIVE, COMPLETED, CANCELLED

@@ -17,6 +17,10 @@ class ChallengeRepositoryImpl @Inject constructor(
         return challengeDao.getChallengeById(challengeId).map { it?.toDomain() }
     }
 
+    override suspend fun getChallengeByInviteCode(inviteCode: String): Challenge? {
+        return challengeDao.getChallengeByInviteCode(inviteCode)?.toDomain()
+    }
+
     override fun getChallengesByUser(userId: String): Flow<List<Challenge>> {
         return challengeDao.getChallengesByUser(userId).map { list ->
             list.map { it.toDomain() }
@@ -63,6 +67,10 @@ class ChallengeRepositoryImpl @Inject constructor(
         challengeDao.updateChallengeStatus(challengeId, status.name)
     }
 
+    override suspend fun joinChallenge(challengeId: String, userId: String) {
+        challengeDao.updateChallengePartner(challengeId, userId)
+    }
+
     private fun ChallengeEntity.toDomain(): Challenge {
         return Challenge(
             id = id,
@@ -70,6 +78,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             description = description,
             creatorUserId = creator_user_id,
             partnerUserId = partner_user_id,
+            inviteCode = invite_code,
             startDate = start_date,
             endDate = end_date,
             status = ChallengeStatus.valueOf(status),
@@ -84,6 +93,7 @@ class ChallengeRepositoryImpl @Inject constructor(
             description = description,
             creator_user_id = creatorUserId,
             partner_user_id = partnerUserId,
+            invite_code = inviteCode,
             start_date = startDate,
             end_date = endDate,
             status = status.name,

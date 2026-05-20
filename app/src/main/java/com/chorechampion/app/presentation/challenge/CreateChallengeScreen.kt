@@ -10,6 +10,7 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -24,34 +25,10 @@ fun CreateChallengeScreen(
     navController: NavController,
     viewModel: ChallengeViewModel = hiltViewModel()
 ) {
-    val availablePartners by viewModel.availablePartners.collectAsState()
+    val createdChallenge by viewModel.createdChallenge.collectAsState()
     
     var challengeName by remember { mutableStateOf("") }
     var challengeDescription by remember { mutableStateOf("") }
-    var selectedPartner by remember { mutableStateOf<User?>(null) }
-    var isSoloChallenge by remember { mutableStateOf(false) }
-    
-    // Listen for partner selection from navigation
-    LaunchedEffect(Unit) {
-        navController.currentBackStackEntry
-            ?.savedStateHandle
-            ?.getStateFlow<String?>("selected_partner_id", null)
-            ?.collect { partnerId ->
-                if (partnerId != null) {
-                    // Fetch partner directly from viewModel
-                    viewModel.getPartnerById(partnerId)
-                    navController.currentBackStackEntry?.savedStateHandle?.remove<String>("selected_partner_id")
-                }
-            }
-    }
-    
-    // Observe selected partner from viewModel
-    val selectedPartnerFromViewModel by viewModel.selectedPartner.collectAsState()
-    LaunchedEffect(selectedPartnerFromViewModel) {
-        if (selectedPartnerFromViewModel != null) {
-            selectedPartner = selectedPartnerFromViewModel
-        }
-    }
     
     // Date/Time state
     var startDate by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -60,6 +37,18 @@ fun CreateChallengeScreen(
     var showEndDatePicker by remember { mutableStateOf(false) }
 
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+
+    // Show invite code dialog when challenge is created
+    if (createdChallenge != null) {
+        InviteCodeDialog(
+            inviteCode = createdChallenge!!.inviteCode,
+            challengeName = createdChallenge!!.name,
+            onDismiss = {
+                viewModel.clearCreatedChallenge()
+                navController.navigateUp()
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -114,71 +103,29 @@ fun CreateChallengeScreen(
                 }
             }
 
-            // Partner Selection Card
-            Card(modifier = Modifier.fillMaxWidth()) {
+            // Info Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Partner Selection",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "📢 Partner Pairing",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = isSoloChallenge,
-                            onCheckedChange = { 
-                                isSoloChallenge = it
-                                if (it) selectedPartner = null
-                            }
-                        )
-                        Text("Solo Challenge (No Partner)")
-                    }
-
-                    if (!isSoloChallenge) {
-                        OutlinedButton(
-                            onClick = { 
-                                navController.navigate(Screen.PartnerSelection.route)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                if (selectedPartner != null) Icons.Default.Person else Icons.Default.PersonAdd,
-                                contentDescription = null
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                Text(
-                                    text = if (selectedPartner != null) "Partner" else "Select Partner",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Text(
-                                    text = selectedPartner?.name ?: "Tap to choose",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                selectedPartner?.email?.let { email ->
-                                    Text(
-                                        text = email,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            Icon(
-                                Icons.Default.ChevronRight,
-                                contentDescription = null
-                            )
-                        }
-                    }
+                    Text(
+                        text = "After creating the challenge, you'll receive a unique invite code. Share this code with your partner so they can join!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                    )
                 }
             }
 
@@ -249,11 +196,10 @@ fun CreateChallengeScreen(
                     viewModel.createChallenge(
                         name = challengeName,
                         description = challengeDescription.ifBlank { null },
-                        partnerId = if (isSoloChallenge) null else selectedPartner?.id,
+                        partnerId = null, // Partner joins later using invite code
                         startDate = startDate,
                         endDate = endDate
                     )
-                    navController.navigateUp()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = challengeName.isNotBlank() && endDate > startDate
@@ -330,4 +276,75 @@ fun DatePickerDialog(
     ) {
         DatePicker(state = datePickerState)
     }
+}
+
+@Composable
+fun InviteCodeDialog(
+    inviteCode: String,
+    challengeName: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Challenge Created!",
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "\"$challengeName\" has been created successfully!",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                
+                Divider()
+                
+                Text(
+                    text = "Share this invite code with your partner:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Text(
+                        text = inviteCode,
+                        style = MaterialTheme.typography.displayMedium,
+                        modifier = Modifier.padding(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        letterSpacing = androidx.compose.ui.unit.TextUnit(8f, androidx.compose.ui.unit.TextUnitType.Sp)
+                    )
+                }
+                
+                Text(
+                    text = "Your partner can join by entering this code in the 'Join Challenge' screen.",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Got it!")
+            }
+        }
+    )
 }

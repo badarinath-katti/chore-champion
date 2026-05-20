@@ -14,6 +14,7 @@ import com.chorechampion.app.presentation.auth.WelcomeScreen
 import com.chorechampion.app.presentation.challenge.ChallengeDetailScreen
 import com.chorechampion.app.presentation.challenge.ChallengeListScreen
 import com.chorechampion.app.presentation.challenge.CreateChallengeScreen
+import com.chorechampion.app.presentation.challenge.JoinChallengeScreen
 import com.chorechampion.app.presentation.challenge.PartnerSelectionScreen
 import com.chorechampion.app.presentation.chores.ChoreDetailScreen
 import com.chorechampion.app.presentation.chores.ChoreListScreen
@@ -21,6 +22,7 @@ import com.chorechampion.app.presentation.completion.CompletionScreen
 import com.chorechampion.app.presentation.evaluation.EvaluationResultsScreen
 import com.chorechampion.app.presentation.history.HistoryScreen
 import com.chorechampion.app.presentation.home.HomeScreen
+import com.chorechampion.app.presentation.profile.ProfileScreen
 
 sealed class Screen(val route: String) {
     object Welcome : Screen("welcome")
@@ -43,6 +45,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object Challenges : Screen("challenges")
     object CreateChallenge : Screen("create_challenge")
+    object JoinChallenge : Screen("join_challenge")
     object ChallengeDetail : Screen("challenge_detail/{challengeId}") {
         fun createRoute(challengeId: String) = "challenge_detail/$challengeId"
     }
@@ -129,6 +132,10 @@ fun AppNavigation(
             CreateChallengeScreen(navController = navController)
         }
         
+        composable(Screen.JoinChallenge.route) {
+            JoinChallengeScreen(navController = navController)
+        }
+        
         composable(
             route = Screen.ChallengeDetail.route,
             arguments = listOf(navArgument("challengeId") { type = NavType.StringType })
@@ -146,6 +153,10 @@ fun AppNavigation(
         
         composable(Screen.History.route) {
             HistoryScreen(navController = navController)
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(navController = navController)
         }
     }
 }

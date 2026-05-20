@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChallengeRepository {
     fun getChallengeById(challengeId: String): Flow<Challenge?>
+    suspend fun getChallengeByInviteCode(inviteCode: String): Challenge?
     fun getChallengesByUser(userId: String): Flow<List<Challenge>>
     fun getChallengesByUserAndStatus(userId: String, status: ChallengeStatus): Flow<List<Challenge>>
     fun getActiveChallenges(userId: String): Flow<List<Challenge>>
@@ -15,4 +16,5 @@ interface ChallengeRepository {
     suspend fun updateChallenge(challenge: Challenge)
     suspend fun deleteChallenge(challengeId: String)
     suspend fun updateChallengeStatus(challengeId: String, status: ChallengeStatus)
+    suspend fun joinChallenge(challengeId: String, userId: String)
 }
